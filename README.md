@@ -32,8 +32,8 @@ It is an eCommerce website designed to offer a seamless shopping experience for 
 1. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/jaswant04/shoevista.git
-   cd shoevista
+   git clone https://github.com/salisai/ShoesStore.git
+   cd ShoesStore
 
    ```
 
