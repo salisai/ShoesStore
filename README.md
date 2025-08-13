@@ -1,4 +1,4 @@
-# ShoeStore
+# ShoesStore
 
 It is an eCommerce website designed to offer a seamless shopping experience for shoes across various categories including men, women, and kids. The platform features an intuitive interface for searching, sorting, and filtering products to help users find exactly what they’re looking for.
 
