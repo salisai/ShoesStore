@@ -27,11 +27,11 @@ const productSchema = new mongoose.Schema({
         required: true
     },
     orders: {
-        type: String,
+        type: number,
         default: '0'
     },
     mrp: {
-        type: String,
+        type: number,
     },
     discount: {
         type: Number,
