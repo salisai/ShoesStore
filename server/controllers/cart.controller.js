@@ -1,11 +1,10 @@
-// controllers/cart.controller.js
 import Cart from "../models/cart.model.js";
 import Product from "../models/product.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
-// 🛒 Get user's cart
+//get user's cart
 export const getCart = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
 
@@ -18,14 +17,18 @@ export const getCart = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, cart, "Cart fetched successfully"));
 });
 
-// 🛒 Add item to cart
+// Add item to cart
 export const addToCart = asyncHandler(async (req, res) => {
   const { productId, size, color, quantity } = req.body;
 
-  // Check if product exists
+  // check if product exists
   const product = await Product.findById(productId);
   if (!product) {
     throw new ApiError(404, "Product not found");
+  }
+
+  if(quantity > product.stock){
+    throw new ApiError(400, "Not enough stock available");
   }
 
   let cart = await Cart.findOne({ user: req.user._id });
@@ -52,7 +55,8 @@ export const addToCart = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, cart, "Item added to cart"));
 });
 
-// 🛒 Update item quantity
+
+// update item quantity
 export const updateCartItem = asyncHandler(async (req, res) => {
   const { itemId, quantity } = req.body;
 
@@ -73,7 +77,7 @@ export const updateCartItem = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, cart, "Cart updated"));
 });
 
-// 🛒 Remove item from cart
+// Remove item from cart
 export const removeFromCart = asyncHandler(async (req, res) => {
   const { itemId } = req.params;
 
@@ -89,7 +93,8 @@ export const removeFromCart = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, cart, "Item removed from cart"));
 });
 
-// 🛒 Clear entire cart
+
+// Clear entire cart
 export const clearCart = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart) throw new ApiError(404, "Cart not found");

@@ -1,6 +1,6 @@
-import User from "../models/user.model.js";
+import User from "../models/user.model.js"
 import { ApiResponse } from "../utils/apiResponse.js";
-import { ErrorHandler } from "../utils/errorHandler.js";
+import { ApiError } from "../utils/errorHandler.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 
@@ -9,12 +9,12 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     const { name, email, password, phone } = req.body;
 
     if (!name || !email || !password) {
-        throw new ErrorHandler(400, "Name, email and password are required");
+        throw new ApiError(400, "Name, email and password are required");
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        throw new ErrorHandler(409, "User already exists with this email");
+        throw new ApiError(409, "User already exists with this email");
     }
 
     const user = await User.create({ name, email, password, phone });
@@ -34,17 +34,17 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        throw new ErrorHandler(400, "Email and password are required");
+        throw new ApiError(400, "Email and password are required");
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-        throw new ErrorHandler(401, "Invalid email or password");
+        throw new ApiError(401, "Invalid email or password");
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-        throw new ErrorHandler(401, "Invalid email or password");
+        throw new ApiError(401, "Invalid email or password");
     }
 
     // Generate tokens
@@ -59,12 +59,12 @@ export const loginUser = asyncHandler(async (req, res, next) => {
 // GET USER
 export const getProfile = asyncHandler(async (req, res, next) => {
     if (!req.user) {
-        throw new ErrorHandler(401, "Not authorized");
+        throw new ApiError(401, "Not authorized");
     }
 
     const user = await User.findById(req.user._id).select("-password");
     if (!user) {
-        throw new ErrorHandler(404, "User not found");
+        throw new ApiError(404, "User not found");
     }
 
     res.status(200).json(new ApiResponse(200, user, "Profile fetched successfully"));
@@ -76,7 +76,7 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
 
     const user = await User.findById(req.user._id);
     if (!user) {
-        throw new ErrorHandler(404, "User not found");
+        throw new ApiError(404, "User not found");
     }
 
     if (name) user.name = name;
