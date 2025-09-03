@@ -1,0 +1,48 @@
+General steps to implement any payment gateway: 
+-----------------------------------------------
+
+1. Set up developer account and get credentials:
+--------create an account on the payment provider, 
+Get your API keys/client ID/Secret from their developer dashboard.
+Keep credentials safe.
+
+2. Understand the payment flow:
+--------most gateways follow this flow.
+i. Frontend: user clicks pay 
+ii. Backend: recieves the request, creates a payment/order with the provider's API using your secret key.
+iii. provider(stripe eg): processes payment (redirects user or shows a secure checkout form)
+iv. Provider backend webhook: notifies you whether the payment succeeded or failed.
+v. backend updates DB: save transaction info in db. 
+vi. Frontend shows confirmation: 
+
+
+3. Backend setup 
+-----------------
+i. Install SDK: npm install stripe 
+ii. create payment API endpoint (eg. /api/payments/create)
+iii. Call provider's API with amount, currency, orderId etc
+iv. return a payment link/client secret to frontend. 
+
+4. Frontend setup:
+------------------
+i. Call your backend's /api/payments/create 
+ii. Redirect user to payment gateways checkout page OR render their UI widget 
+iii. Wait for response 
+
+5. Handle webhooks:
+-------------------
+i. payment providers don't trust the frontend(cuz someone could fake a success message)
+ii. They send a webhook server-to-server to your backend confirming if payment succeeded. 
+iii. You must verify that webhook then mark the order as paid in your database.
+
+
+6. Save transaction data: 
+-------------------------
+Store in DB. 
+
+7. Test in sandbox mode:
+-------------------------
+all providers have test keys/sandbox environment
+first test payments with fake cards or test accounts.
+Then switch to live keys for production 
+

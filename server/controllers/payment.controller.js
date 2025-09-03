@@ -1,36 +1,84 @@
 // controllers/payment.controller.js
 import Payment from "../models/payment.model.js";
 import Order from "../models/order.model.js";
+import asyncHandler from "../utils/AsynHandler.util.js"
+import { ErrorHandler } from "../utils/ErrorHandler.utils.js";
+import {ApiResponse} from "../utils/ApiResponse.util.js"
+import {createStripePaymentIntent, createJazzCashPayment, createEasyPaisaPayment} from "../services/payment.service.js"
 
-// Create a new payment
-export const createPayment = async (req, res) => {
+
+export const createStripePayment = asyncHandler(async(req, res) => {
+  const {user, order, amount, currecy="usd"} = req.body;
+
+  //ensure the order exists
+  const existingOrder = await Order.findById(order);
+  if(!existingOrder){
+    return res.status(404).json({message: "Order not found"});
+  }
+
+  //call stripe service
+  const paymentIntent = await createStripePayment(amount, currecy, user);
+  //save to db
+  const payment = new Payment({
+    user, 
+    order,
+    amount,
+    provider: "Stripe",
+    status: "pending",
+    transactionId:paymentIntent.id,
+  });
+
+  await payment.save()
+
+  res.status(201).json({
+    message: "Stripe payment initiated",
+    clientSecret: paymentIntent.client_secret,
+    payment
+  })
+});
+
+
+
+// JazzCash
+export const createJazzCashPaymentController = async (req, res) => {
   try {
-    const { user, order, amount, provider } = req.body;
-
-    // Ensure the order exists
+    const { user, order, amount } = req.body;
+    
     const existingOrder = await Order.findById(order);
-    if (!existingOrder) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+    if (!existingOrder) return res.status(404).json({ message: "Order not found" });
 
-    const payment = new Payment({
-      user,
-      order,
-      amount,
-      provider,
-      status: "pending", // default
-    });
+    const { paymentUrl, txnRef } = await createJazzCashPayment(amount, order, user);
 
+    const payment = new Payment({ user, order, amount, provider: "JazzCash", status: "pending", transactionId: txnRef });
     await payment.save();
 
-    res.status(201).json({
-      message: "Payment created successfully",
-      payment,
-    });
+    res.status(201).json({ message: "JazzCash payment initiated", paymentUrl, payment });
   } catch (error) {
-    res.status(500).json({ message: "Error creating payment", error });
+    res.status(500).json({ message: "Error creating JazzCash payment", error: error.message });
   }
 };
+
+
+// EasyPaisa
+export const createEasyPaisaPaymentController = async (req, res) => {
+  try {
+    const { user, order, amount } = req.body;
+    const existingOrder = await Order.findById(order);
+    if (!existingOrder) return res.status(404).json({ message: "Order not found" });
+
+    const { paymentUrl, orderRef } = await createEasyPaisaPayment(amount, order, user);
+
+    const payment = new Payment({ user, order, amount, provider: "EasyPaisa", status: "pending", transactionId: orderRef });
+    await payment.save();
+
+    res.status(201).json({ message: "EasyPaisa payment initiated", paymentUrl, payment });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating EasyPaisa payment", error: error.message });
+  }
+};
+
+
+
 
 // Get all payments (admin)
 export const getAllPayments = async (req, res) => {
